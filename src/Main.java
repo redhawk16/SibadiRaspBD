@@ -9,6 +9,7 @@
 *   Логика:
 *   Добавляем в БД данные при этом ищем их в БД на предмет совпадения, если найдено то считываем их ID */
 
+/* Jsoup */
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -25,11 +26,14 @@ public class Main {
 
     public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
         // Создаем экземпляр по работе с БД
-        DbHandler dbHandler = DbHandler.getInstance();
-        dbHandler.CreateDB();
+        MySQL mySQL = MySQL.getInstance();
+        mySQL.createDefaultTable();
+
+/*        DbHandler dbHandler = DbHandler.getInstance();
+        dbHandler.CreateDB();*/
 
         //Document doc = Jsoup.connect("http://u999451g.beget.tech/rasp/rasp.html").get(); // Адрес сайта для парсинга
-        Document doc = Jsoup.connect("http://umu.sibadi.org/Rasp/Rasp.aspx?group=10599&sem=2").get(); // Адрес сайта для парсинга
+        Document doc = Jsoup.connect("http://umu.sibadi.org/Rasp/Rasp.aspx?group=11052&sem=1").get(); // Адрес сайта для парсинга
 
         String[] DayOfWeeks = {"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}; // Ключевые слова для поиска на странице сайта
         String[] Time = {"8-20 9-50", "10-00 11-30", "11-40 13-10", "13-45 15-15", "15-25 16-55", "17-05 18-35"};
@@ -84,7 +88,7 @@ public class Main {
                     tr.child(1).before("<td>3</td>");
                 }
 
-                //System.out.println(tr.child(tds).text()); // Вывод по строчно (td)
+                System.out.println(tr.child(tds).text()); // Вывод по строчно (td)
 
                 /* TODO: переделать!*/
                 String type = null;
@@ -107,11 +111,13 @@ public class Main {
                 if(tds == 4) { type = "Auditories"; name = tr.child(tds).text(); }
                 if(tds == 2 || tds == 3 || tds == 4) {
                     try {
-                        dbHandler.WriteDB(type, name);
+                        mySQL.WriteDB(type, name);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
                 }
+                /* TODO: переделать! ^ */
+
 
             }
 
@@ -142,9 +148,9 @@ public class Main {
          *    затем считываем из этих таблиц всю информацию и заносим их в массив,
          *    после приступаем к Schedules проверяя на совпадение текста и данных в массиве, заменяя на соответсвующие ID из БД */
 
-        List<String[]> disciplines = dbHandler.getTable("Disciplines");
-        List<String[]> teachers = dbHandler.getTable("Teachers");
-        List<String[]> auditories = dbHandler.getTable("Auditories");
+        List<String[]> disciplines = mySQL.getTable("Disciplines");
+        List<String[]> teachers = mySQL.getTable("Teachers");
+        List<String[]> auditories = mySQL.getTable("Auditories");
 
         for(String[] sc : Schedules) {
             String Code_Dayweek = null;
@@ -172,13 +178,6 @@ public class Main {
                     break;
                 }
             }
-//            for(String dayofweek : DayOfWeeks) {
-//                if(sc[0].equals(dayofweek)) {
-//                   // int fdw = dayofweek; // Получаем ID дня недели
-//                    System.out.println();
-//                    break;
-//                }
-//            }
 
             // Время
             for(int i = 0; i < Time.length; i++){
@@ -188,12 +187,6 @@ public class Main {
                     break;
                 }
             }
-//            for(String time : Time) {
-//                if(sc[1].equals(time)) {
-//                    Number_Lesson = String.valueOf(time.indexOf(sc[1]) + 1);
-//                    break;
-//                }
-//            }
 
             //System.out.print(sc[2]); // Тип Недели
 
@@ -205,12 +198,6 @@ public class Main {
                     break;
                 }
             }
-//            for(String typelessons : Typelessons) {
-//                if(sc[3].equals(typelessons)) {
-//                    Code_Typelesson = String.valueOf(typelessons.indexOf(sc[3]) + 1);
-//                    break;
-//                }
-//            }
 
             // Дисциплины
             for (String[] discip : disciplines) {
@@ -239,17 +226,19 @@ public class Main {
 /*            sc[7]; // Подгруппа
             sc[8]; // Группа
             sc[9]; // Факультет*/
-            dbHandler.WriteDB("Schedules", Code_Dayweek, Number_Lesson, sc[2], Code_Typelesson, Code_Discipline, Code_Teacher, Code_Auditory, sc[7], sc[8], sc[9]);
+            mySQL.WriteDB("Schedules", Code_Dayweek, Number_Lesson, sc[2], Code_Typelesson, Code_Discipline, Code_Teacher, Code_Auditory, sc[7], sc[8], sc[9]);
         }
 
         //dbHandler.CreateDB();
 
         // Получаем все записи и выводим их на консоль
-        List<Schedules> products = dbHandler.getAllProducts();
+/*        List<Schedules> products = mySQL.getAllProducts();
         for (Schedules product : products) {
             System.out.println(product.toString());
-        }
+        }*/
 
-        dbHandler.CloseDB();
+        mySQL.print();
+
+        mySQL.closeDB();
     }
 }
