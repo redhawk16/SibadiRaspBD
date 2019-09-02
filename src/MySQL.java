@@ -2,14 +2,16 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Scanner;
 
-public class MySQL {
+class MySQL {
 
     // Используем шаблон одиночка, чтобы не плодить множество
     // экземпляров класса DbHandler
     private static MySQL instance = null;
 
-    private static final String URL = "jdbc:mysql://localhost:3306/rasp";
+    private static final String DB_NAME = "rasp";
+    private static final String URL = "jdbc:mysql://localhost:3306/" + DB_NAME;
     private static final String USER = "root";
     private static final String PASS = "";
 
@@ -19,66 +21,29 @@ public class MySQL {
 
     private static String sqlQuery = null;
 
-    public static synchronized MySQL getInstance() throws SQLException, ClassNotFoundException {
+    static synchronized MySQL getInstance() throws SQLException {
         if (instance == null)
             instance = new MySQL();
         return instance;
     }
 
     private MySQL() throws SQLException {
-        try{
             Properties properties=new Properties();
             properties.setProperty("user", USER);
             properties.setProperty("password", PASS);
             properties.setProperty("useUnicode", "true");
             properties.setProperty("characterEncoding", "UTF-8");
+            properties.setProperty("serverTimezone", "UTC");
 
             con = DriverManager.getConnection(URL, properties);
-
-            //stmt = con.createStatement(); // Statement для выполнения запроса
-            //rs = stmt.executeQuery(query); // Выполняем запрос
-
-/*            while (rs.next()) {
-                int count = rs.getInt(1);
-                System.out.println("Total number of books in the table : " + count);
-            }*/
-
-        } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
-        }
     }
 
-/*    private static void connect() {
-        //String query = "select count(*) from books";
-
-        try{
-            Properties properties=new Properties();
-            properties.setProperty("user", USER);
-            properties.setProperty("password", PASS);
-            properties.setProperty("useUnicode", "true");
-            properties.setProperty("characterEncoding", "UTF-8");
-
-            con = DriverManager.getConnection(URL, properties);
-
-            //stmt = con.createStatement(); // Statement для выполнения запроса
-            //rs = stmt.executeQuery(query); // Выполняем запрос
-
-*//*            while (rs.next()) {
-                int count = rs.getInt(1);
-                System.out.println("Total number of books in the table : " + count);
-            }*//*
-
-        } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
-        }
-
-    }*/
-
-    public static void createDefaultTable() {
+    void createDefaultTable() {
 
         try{
             //connect();
-            stmt = con.createStatement();
+            if(stmt == null) {
+            stmt = con.createStatement(); }
             DatabaseMetaData dbMeta = con.getMetaData();
 
             List<String[]> Tables = new ArrayList<String[]>();
@@ -137,16 +102,10 @@ public class MySQL {
                             "(3, 'обе недели');"
             } );
 
-
             System.out.println("> Создание таблиц и их структуры...");
 
             for(int i = 0; i < Tables.size(); i++) {
                 rs = dbMeta.getTables(null, null, Tables.get(i)[0], null);
-
-/* Костыль исравить */
-while(rs.next()) {
-
-}
 
                 if(!rs.next()) { // Проверяем существует ли данная таблица
                     stmt.executeUpdate(Tables.get(i)[1]);
@@ -154,17 +113,27 @@ while(rs.next()) {
                         stmt.executeUpdate(Tables.get(i)[2]);
                     }
                     System.out.println("> Таблица '"+ Tables.get(i)[0] +"' создана");
+                } else {
+                    rs.close();
+                    System.out.println("Таблицы созданы ранее. Вы хотите удалить их? \nYes(Y)");
+                    Scanner scanner = new Scanner(System.in);
+                    String ans = scanner.next();
+                    switch (ans) {
+                        case "y": case "yes": delTables(); createDefaultTable();
+                        default: return;
+                    }
                 }
             }
 
-            System.out.println("> Таблицы созданы или уже были созданы!");
+            rs.close();
+            System.out.println("> Таблицы созданы или уже были созданы ранее!");
         } catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
         }
 
     }
 
-    public static void WriteDB(String name, String... args) throws SQLException {
+    void WriteDB(String name, String... args) throws SQLException {
         // Создадим подготовленное выражение, чтобы избежать SQL-инъекций
         switch (name) {
             case("Auditories"):
@@ -200,8 +169,9 @@ while(rs.next()) {
         }
     }
 
-    public static List<String[]> getTable(String tName) throws SQLException {
-        stmt = con.createStatement();
+    List<String[]> getTable(String tName) throws SQLException {
+        if(stmt == null) {
+            stmt = con.createStatement(); }
 
         sqlQuery = "SELECT * FROM " + tName;
         rs = stmt.executeQuery(sqlQuery);
@@ -218,8 +188,9 @@ while(rs.next()) {
     }
 
 
-    public void print() throws SQLException {
-        stmt = con.createStatement();
+    void print() throws SQLException {
+        if(stmt == null) {
+            stmt = con.createStatement(); }
 
         sqlQuery = "SELECT id, Name_Dayweek, Time_Start, Time_End, Name_Typeweek, Name_Typelesson, Name_Discipline, Name_Teacher, Number_Auditory "
                 + "FROM Schedules "
@@ -242,22 +213,26 @@ while(rs.next()) {
                     + rs.getString("Name_Teacher") + " "
                     + rs.getString("Number_Auditory"));
         }
+        rs.close();
     }
 
 
-
 /*TODO: Test this code*/
-    private static void delTables() {
+    private void delTables() {
         try {
-            stmt = con.createStatement();
-            stmt.executeUpdate("DROP DATABASE schedules; CREATE DATABASE schedules;");
+            if(stmt == null) {
+                stmt = con.createStatement(); }
+            stmt.executeUpdate("DROP DATABASE " + DB_NAME);
+            stmt.executeUpdate("CREATE DATABASE " + DB_NAME);
+            stmt.executeQuery("USE " + DB_NAME);
+
+            System.out.println("> Таблицы удалены!");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public static void closeDB() {
-
+    void closeDB() {
         try {
             con.close();
             stmt.close();

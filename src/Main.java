@@ -24,13 +24,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException, SQLException {
         // Создаем экземпляр по работе с БД
         MySQL mySQL = MySQL.getInstance();
         mySQL.createDefaultTable();
-
-/*        DbHandler dbHandler = DbHandler.getInstance();
-        dbHandler.CreateDB();*/
 
         //Document doc = Jsoup.connect("http://u999451g.beget.tech/rasp/rasp.html").get(); // Адрес сайта для парсинга
         Document doc = Jsoup.connect("http://umu.sibadi.org/Rasp/Rasp.aspx?group=11052&sem=1").get(); // Адрес сайта для парсинга
@@ -88,7 +85,7 @@ public class Main {
                     tr.child(1).before("<td>3</td>");
                 }
 
-                System.out.println(tr.child(tds).text()); // Вывод по строчно (td)
+                //System.out.println(tr.child(tds).text()); // Вывод по строчно (td)
 
                 /* TODO: переделать!*/
                 String type = null;
@@ -139,9 +136,7 @@ public class Main {
                 trPos.getAndIncrement();
         });
 
-        System.out.println("\n\tSchedules\t\n");
-
-        /* Try to add*/
+        System.out.println("\n\tРасписание:\n");
 
         /*  TODO:
          *    Делаем так: заносим в БД таблицы Дисциплины, Преподователей, Аудитории,
@@ -226,17 +221,10 @@ public class Main {
 /*            sc[7]; // Подгруппа
             sc[8]; // Группа
             sc[9]; // Факультет*/
-            mySQL.WriteDB("Schedules", Code_Dayweek, Number_Lesson, sc[2], Code_Typelesson, Code_Discipline, Code_Teacher, Code_Auditory, sc[7], sc[8], sc[9]);
+            mySQL.WriteDB("Schedules", Code_Dayweek, Number_Lesson, sc[2], Code_Typelesson, Code_Discipline, Code_Teacher, Code_Auditory, sc[7], sc[8], sc[9]); // передаем данные для записи в БД
         }
 
-        //dbHandler.CreateDB();
-
         // Получаем все записи и выводим их на консоль
-/*        List<Schedules> products = mySQL.getAllProducts();
-        for (Schedules product : products) {
-            System.out.println(product.toString());
-        }*/
-
         mySQL.print();
 
         mySQL.closeDB();
