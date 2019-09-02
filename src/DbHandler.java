@@ -139,7 +139,7 @@ public class DbHandler {
         }
     }
 
-    public List<Schedules> getAllProducts() {
+    /*public List<Schedules> getAllProducts() {
 
         // Statement используется для того, чтобы выполнить sql-запрос
         try (Statement statement = this.connection.createStatement()) {
@@ -186,7 +186,7 @@ public class DbHandler {
             // Если произошла ошибка - возвращаем пустую коллекцию
             return Collections.emptyList();
         }
-    }
+    }*/
 
     public List<String[]> getTable(String tName) throws SQLException {
         statmt = this.connection.createStatement();

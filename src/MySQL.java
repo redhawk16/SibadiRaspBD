@@ -6,8 +6,7 @@ import java.util.Scanner;
 
 class MySQL {
 
-    // Используем шаблон одиночка, чтобы не плодить множество
-    // экземпляров класса DbHandler
+    // Используем шаблон одиночка, чтобы не плодить множество экземпляров класса
     private static MySQL instance = null;
 
     private static final String DB_NAME = "rasp";
